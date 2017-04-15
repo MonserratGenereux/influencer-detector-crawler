@@ -1,7 +1,7 @@
 package facebook
 
 import (
-	"log"
+	"models"
 	"os"
 )
 
@@ -26,12 +26,16 @@ func NewCrawler(sourceID string) *Crawler {
 }
 
 // Start crawling data wiht previous setup.
+// It fetches the page of the given pageID and crawls all connected nodes pages
+// This is pages liked by the source page.
+// TODO(dtoledo23): Implement recursive crawling with depth.
 func (c *Crawler) Start() error {
 
 	if c.currentDepth >= maxDepth {
 		return nil
 	}
 
+	// Fetch starting point
 	fbNode, err := c.fetchPage(c.sourceID)
 	if err != nil {
 		return err
@@ -39,10 +43,11 @@ func (c *Crawler) Start() error {
 
 	fbNode.ToCrawlerNode().Save()
 
-	nodes := make(chan *facebookNode, 100)
-	go procesNodes(nodes)
-	err = c.fetchEdges(c.sourceID, nodes)
-	close(nodes)
+	neighborshannel := make(chan facebookNode)
+
+	// Concurrent go routine to process fetched nodes
+	go c.processNeighborsNodes(neighborshannel)
+	err = c.fetchAdjacentNodes(c.sourceID, neighborshannel)
 
 	if err != nil {
 		return err
@@ -51,8 +56,16 @@ func (c *Crawler) Start() error {
 	return nil
 }
 
-func procesNodes(nodesChannel chan *facebookNode) {
-	for node := range nodesChannel {
-		log.Println("Going to proccess", node)
+func (c *Crawler) processNeighborsNodes(neighborshannel <-chan facebookNode) {
+	for neighbor := range neighborshannel {
+		// Transform to our defined Node model and save.
+		neighbor.ToCrawlerNode().Save()
+
+		// Create edge and store.
+		edge := models.Edge{
+			Source:      c.sourceID,
+			Destination: neighbor.ID,
+		}
+		edge.Save()
 	}
 }
