@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cassandra"
 	"crawler/facebook"
 	"log"
 
@@ -14,6 +15,10 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	facebookCrawler := facebook.NewCrawler()
+	// Connect to Cassandra
+	session := cassandra.GetSession()
+	defer session.Close()
+
+	facebookCrawler := facebook.NewCrawler("683165801724841")
 	log.Fatal(facebookCrawler.Start())
 }
