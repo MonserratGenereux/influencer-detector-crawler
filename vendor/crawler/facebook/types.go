@@ -26,6 +26,10 @@ type facebookNode struct {
 	} `json:"location"`
 }
 
+func (fbNode *facebookNode) isEmpty() bool {
+	return len(fbNode.ID) == 0
+}
+
 func (fbNode *facebookNode) ToCrawlerNode() *models.Node {
 
 	// Join main category and category list.
@@ -53,10 +57,6 @@ type facebookEdges struct {
 		Previous string `json:"previous"`
 		Next     string `json:"next"`
 	} `json:"paging"`
-}
-
-func (fbNode *facebookNode) isEmpty() bool {
-	return len(fbNode.ID) == 0
 }
 
 type graphAPIError struct {

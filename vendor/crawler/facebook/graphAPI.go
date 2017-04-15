@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -12,7 +13,6 @@ import (
 const (
 	graphAPIHost    = "graph.facebook.com"
 	graphAPIVersion = "v2.8"
-	depth           = 2
 )
 
 var (
@@ -27,7 +27,7 @@ var (
 )
 
 func (c *Crawler) fetchPage(pageID string) (*facebookNode, error) {
-	rawResponseBody, err := callGraphAPI(pageID, c.accessToken)
+	rawResponseBody, err := defaultCallGraphAPI(pageID, c.accessToken)
 	if err != nil {
 		return nil, fmt.Errorf("Error fetching Facebook page: %s", err)
 	}
@@ -40,47 +40,69 @@ func (c *Crawler) fetchPage(pageID string) (*facebookNode, error) {
 	return &page, nil
 }
 
-func (c *Crawler) fetchEdges(pageID string) {
+func (c *Crawler) fetchEdges(pageID string, nodes chan *facebookNode) error {
+	url := defaultGraphAPIURL(pageID+"/likes", c.accessToken).String()
+	var err error
 
-}
-
-func (c *Crawler) fetchEdge(pageID string) error {
-	rawResponseBody, err := callGraphAPI(pageID+"/likes", c.accessToken)
-	if err != nil {
-		return fmt.Errorf("Error fetching Facebook likes edges: %s", err)
+	for len(url) != 0 {
+		url, err = c.fetchEdgeChunk(url, nodes)
+		if err != nil {
+			return err
+		}
 	}
 
-	var edges facebookEdges
-	if err := json.Unmarshal(rawResponseBody, &edges); err != nil {
-		return fmt.Errorf("Error docoding edges response: %s", err)
-	}
-
-	for i, edge := range edges.Edges {
-		fmt.Println(i, edge)
-	}
-
-	fmt.Println(edges.Paging)
 	return nil
 }
 
-func callGraphAPI(path, accessToken string) ([]byte, error) {
+func (c *Crawler) fetchEdgeChunk(url string, nodes chan *facebookNode) (string, error) {
+	// Make likes edges request.
+	rawResponseBody, err := callGraphAPI(url)
+	if err != nil {
+		return "", fmt.Errorf("Error fetching Facebook likes edges: %s", err)
+	}
+
+	// Decode json
+	var edges facebookEdges
+	if err := json.Unmarshal(rawResponseBody, &edges); err != nil {
+		return "", fmt.Errorf("Error docoding edges response: %s", err)
+	}
+
+	// Send results to channel receiver
+	// Edge processing logic is going to happend elsewhere.
+	for _, edge := range edges.Edges {
+		log.Println("Sending node", edge)
+		nodes <- &edge
+	}
+
+	// Finished pagination crawling.
+	if len(edges.Paging.Next) == 0 {
+		return "", nil
+	}
+
+	return edges.Paging.Next, nil
+}
+
+func defaultCallGraphAPI(path, accessToken string) ([]byte, error) {
+	return callGraphAPI(defaultGraphAPIURL(path, accessToken).String())
+}
+
+func defaultGraphAPIURL(path, accessToken string) *url.URL {
 	query := url.Values{}
 	query.Set("fields", strings.Join(extractedPageFields, ","))
 	query.Set("access_token", accessToken)
 
-	// Setup request
-	request := &http.Request{
-		Method: "GET",
-		URL: &url.URL{
-			Scheme:   "https",
-			Host:     graphAPIHost,
-			Path:     graphAPIVersion + "/" + path,
-			RawQuery: query.Encode(),
-		},
+	return &url.URL{
+		Scheme:   "https",
+		Host:     graphAPIHost,
+		Path:     graphAPIVersion + "/" + path,
+		RawQuery: query.Encode(),
 	}
+}
+
+func callGraphAPI(url string) ([]byte, error) {
 
 	// Make API call.
-	response, err := http.Get(request.URL.String())
+	response, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("Facebook API call error: %s", err)
 	}

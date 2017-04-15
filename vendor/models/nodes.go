@@ -1,9 +1,6 @@
 package models
 
-import (
-	"cassandra"
-	"log"
-)
+import "cassandra"
 
 // Node defines a model to represent an node in the social graph.
 type Node struct {
@@ -24,11 +21,11 @@ type Node struct {
 }
 
 // Save the Node to the given database.
-func (n *Node) Save() {
+func (n *Node) Save() error {
 	session := cassandra.GetSession()
 
 	// id, platform, name, description, categories, fan_count, city, country, zip
-	q := session.Query(cassandra.InsertEdgeQuery,
+	q := session.Query(cassandra.InsertNodeQuery,
 		n.ID,
 		n.Platform,
 		n.Name,
@@ -40,7 +37,5 @@ func (n *Node) Save() {
 		n.ZIP,
 	)
 
-	if err := q.Exec(); err != nil {
-		log.Fatal(err)
-	}
+	return q.Exec()
 }
