@@ -3,6 +3,7 @@ package facebook
 import (
 	"fmt"
 	"models"
+	"strconv"
 )
 
 type facebookNode struct {
@@ -32,6 +33,10 @@ func (fbNode *facebookNode) isEmpty() bool {
 
 func (fbNode *facebookNode) ToCrawlerNode() *models.Node {
 
+	// Parse id
+	var id int64
+	id, _ = strconv.ParseInt(fbNode.ID, 10, 64)
+
 	// Join main category and category list.
 	categories := []string{fbNode.Category}
 	for _, subCategories := range fbNode.CategoryList {
@@ -39,7 +44,7 @@ func (fbNode *facebookNode) ToCrawlerNode() *models.Node {
 	}
 
 	return &models.Node{
-		ID:          fbNode.ID,
+		ID:          id,
 		Platform:    "facebook",
 		Name:        fbNode.Name,
 		Description: fbNode.About,

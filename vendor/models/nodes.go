@@ -5,7 +5,7 @@ import "cassandra"
 // Node defines a model to represent an node in the social graph.
 type Node struct {
 	// Page info
-	ID          string
+	ID          int64
 	Platform    string
 	Name        string
 	Description string
