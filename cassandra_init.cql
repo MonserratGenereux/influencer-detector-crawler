@@ -22,21 +22,3 @@ CREATE TABLE IF NOT EXISTS influencer_detector.edges (
   destination TEXT,
   PRIMARY KEY (source, destination)
 );
-
-# Insert references
-INSERT INTO influencer_detector.nodes
-  ( id, platform, name, description, categories, fan_count, city, country, zip)
-VALUES ( 
-  '683165801724841', 
-  'facebook', 
-  'Wizeline Mexico', 
-  'Wizeline transforms how business design, develop and deliver technology products. Join our team! Now hiring in GDL.', 
-  ['Internet Company', 'Local Service', 'Professional Service'],
-  3684,
-  'Zapopan',
-  'Mexico',
-  '45050'
-  );
-
-INSERT INTO influencer_detector.edges ( source, destination )
-VALUES ( '683165801724841', '683165801724841');
