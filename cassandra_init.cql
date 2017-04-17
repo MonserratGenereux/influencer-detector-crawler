@@ -4,9 +4,8 @@ WITH REPLICATION = {'class':'SimpleStrategy', 'replication_factor' : 2}
 AND DURABLE_WRITES = true;
 
 # Setup tables
-
 CREATE TABLE IF NOT EXISTS influencer_detector.nodes (
-  id TEXT PRIMARY KEY,
+  id BIGINT PRIMARY KEY,
   platform TEXT,
   name TEXT,
   description TEXT, 
@@ -18,7 +17,7 @@ CREATE TABLE IF NOT EXISTS influencer_detector.nodes (
 );
 
 CREATE TABLE IF NOT EXISTS influencer_detector.edges (
-  source TEXT,
-  destination TEXT,
+  source BIGINT,
+  destination BIGINT,
   PRIMARY KEY (source, destination)
 );

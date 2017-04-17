@@ -5,9 +5,9 @@ import "cassandra"
 // Edge defines a model to represent an edge in the social graph.
 type Edge struct {
 	// Source Node id
-	Source string
+	Source int64
 	// Destination Node id
-	Destination string
+	Destination int64
 }
 
 // Save the Node to the given database.

@@ -3,6 +3,7 @@ package facebook
 import (
 	"models"
 	"os"
+	"strconv"
 )
 
 const (
@@ -60,11 +61,13 @@ func (c *Crawler) processNeighborsNodes(neighborshannel <-chan facebookNode) {
 	for neighbor := range neighborshannel {
 		// Transform to our defined Node model and save.
 		neighbor.ToCrawlerNode().Save()
+		sourceID, _ := strconv.ParseInt(c.sourceID, 10, 64)
+		destID, _ := strconv.ParseInt(neighbor.ID, 10, 64)
 
 		// Create edge and store.
 		edge := models.Edge{
-			Source:      c.sourceID,
-			Destination: neighbor.ID,
+			Source:      sourceID,
+			Destination: destID,
 		}
 		edge.Save()
 	}
