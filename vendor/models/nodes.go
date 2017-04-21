@@ -18,12 +18,15 @@ type Node struct {
 	City    string
 	Country string
 	ZIP     string
+
+	Depth int
 }
 
 // Save the Node to the given database.
 func (n *Node) Save() error {
 	session := cassandra.GetSession()
 
+	// log.Println("Saving", n.ID, n.Name, n.Depth)
 	// id, platform, name, description, categories, fan_count, city, country, zip
 	q := session.Query(cassandra.InsertNodeQuery,
 		n.ID,
@@ -35,6 +38,7 @@ func (n *Node) Save() error {
 		n.City,
 		n.Country,
 		n.ZIP,
+		n.Depth,
 	)
 
 	return q.Exec()

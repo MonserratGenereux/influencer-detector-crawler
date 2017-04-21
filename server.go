@@ -1,9 +1,11 @@
 package main
 
 import (
+	"api"
 	"cassandra"
-	"crawler/facebook"
 	"log"
+	"net/http"
+	"os"
 
 	"github.com/joho/godotenv"
 )
@@ -19,6 +21,9 @@ func main() {
 	session := cassandra.GetSession()
 	defer session.Close()
 
-	facebookCrawler := facebook.NewCrawler("683165801724841")
-	log.Fatal(facebookCrawler.Start())
+	// Run server.
+	// Address = HOST:PORT
+	address := os.Getenv("HOST") + ":" + os.Getenv("PORT")
+	log.Println("Analytics client API running on ", address)
+	http.ListenAndServe(address, api.GetRoutes())
 }

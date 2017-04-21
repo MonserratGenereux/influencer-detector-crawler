@@ -1,6 +1,7 @@
 package facebook
 
 import (
+	"fmt"
 	"models"
 	"os"
 	"strconv"
@@ -18,11 +19,11 @@ type Crawler struct {
 }
 
 // NewCrawler initializes a crawler and set it up.
-func NewCrawler(sourceID string) *Crawler {
+func NewCrawler(sourceID string, depth int) *Crawler {
 	return &Crawler{
 		accessToken:  os.Getenv("FACEBOOK_PAGE_ACCESS_TOKEN"),
 		sourceID:     sourceID,
-		currentDepth: 0,
+		currentDepth: depth,
 	}
 }
 
@@ -31,18 +32,14 @@ func NewCrawler(sourceID string) *Crawler {
 // This is pages liked by the source page.
 // TODO(dtoledo23): Implement recursive crawling with depth.
 func (c *Crawler) Start() error {
-
-	if c.currentDepth >= maxDepth {
-		return nil
-	}
-
+	fmt.Printf("Initializing crawler for page '%s' in depth %d\n", c.sourceID, c.currentDepth)
 	// Fetch starting point
 	fbNode, err := c.fetchPage(c.sourceID)
 	if err != nil {
 		return err
 	}
 
-	fbNode.ToCrawlerNode().Save()
+	fbNode.ToCrawlerNode(c.currentDepth).Save()
 
 	neighborshannel := make(chan facebookNode)
 
@@ -54,13 +51,14 @@ func (c *Crawler) Start() error {
 		return err
 	}
 
+	fmt.Printf("Finished crawler for page '%s' in depth %d\n", c.sourceID, c.currentDepth)
 	return nil
 }
 
 func (c *Crawler) processNeighborsNodes(neighborshannel <-chan facebookNode) {
 	for neighbor := range neighborshannel {
 		// Transform to our defined Node model and save.
-		neighbor.ToCrawlerNode().Save()
+
 		sourceID, _ := strconv.ParseInt(c.sourceID, 10, 64)
 		destID, _ := strconv.ParseInt(neighbor.ID, 10, 64)
 
@@ -70,5 +68,14 @@ func (c *Crawler) processNeighborsNodes(neighborshannel <-chan facebookNode) {
 			Destination: destID,
 		}
 		edge.Save()
+
+		if c.currentDepth > 1 {
+			err := NewCrawler(neighbor.ID, c.currentDepth-1).Start()
+			if err != nil {
+				fmt.Println(err)
+			}
+		} else {
+			neighbor.ToCrawlerNode(0).Save()
+		}
 	}
 }

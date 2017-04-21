@@ -31,7 +31,7 @@ func (fbNode *facebookNode) isEmpty() bool {
 	return len(fbNode.ID) == 0
 }
 
-func (fbNode *facebookNode) ToCrawlerNode() *models.Node {
+func (fbNode *facebookNode) ToCrawlerNode(depth int) *models.Node {
 
 	// Parse id
 	var id int64
@@ -53,6 +53,7 @@ func (fbNode *facebookNode) ToCrawlerNode() *models.Node {
 		City:        fbNode.Location.City,
 		Country:     fbNode.Location.Country,
 		ZIP:         string(fbNode.Location.ZIP),
+		Depth:       depth,
 	}
 }
 
