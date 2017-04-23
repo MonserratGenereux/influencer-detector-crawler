@@ -44,13 +44,22 @@ func buildRoutes() *httprouter.Router {
 				return
 			}
 
-			log.Println("Requesting page", pageInfo.ID, "with depth", pageInfo.Depth)
+			msg := fmt.Sprintf("Received crawling request for page %s in depth %d\n",
+				pageInfo.ID,
+				pageInfo.Depth)
+
+			log.Println(msg)
+			fmt.Fprint(w, msg)
+
 			facebookCrawler := facebook.NewCrawler(pageInfo.ID, pageInfo.Depth)
-			if err := facebookCrawler.Start(); err != nil {
-				fmt.Fprint(w, err)
-			} else {
-				fmt.Fprint(w, "OK\n")
+
+			log.Printf("Starting page %s in depth %d\n", pageInfo.ID, pageInfo.Depth)
+			err = facebookCrawler.Start()
+			if err != nil {
+				log.Println(err)
 			}
+
+			log.Printf("Finished page %s in depth %d\n", pageInfo.ID, pageInfo.Depth)
 		})
 
 	return router
