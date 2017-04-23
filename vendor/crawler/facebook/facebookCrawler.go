@@ -1,10 +1,8 @@
 package facebook
 
 import (
-	"fmt"
-	"models"
+	"cassandra"
 	"os"
-	"strconv"
 )
 
 const (
@@ -32,50 +30,31 @@ func NewCrawler(sourceID string, depth int) *Crawler {
 // This is pages liked by the source page.
 // TODO(dtoledo23): Implement recursive crawling with depth.
 func (c *Crawler) Start() error {
-	fmt.Printf("Initializing crawler for page '%s' in depth %d\n", c.sourceID, c.currentDepth)
 	// Fetch starting point
 	fbNode, err := c.fetchPage(c.sourceID)
 	if err != nil {
 		return err
 	}
 
-	fbNode.ToCrawlerNode(c.currentDepth).Save()
+	node := fbNode.ToCrawlerNode(c.currentDepth)
+	cacheDepth := cassandra.GetNodeDepth(node.ID)
 
-	neighborshannel := make(chan facebookNode)
+	if (cacheDepth >= c.currentDepth) && (c.currentDepth != 0) {
+		return nil
+	}
+
+	node.Save()
+
+	if c.currentDepth <= 0 {
+		return nil
+	}
 
 	// Concurrent go routine to process fetched nodes
-	go c.processNeighborsNodes(neighborshannel)
-	err = c.fetchAdjacentNodes(c.sourceID, neighborshannel)
+	err = c.fetchAdjacentNodes(c.sourceID)
 
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Finished crawler for page '%s' in depth %d\n", c.sourceID, c.currentDepth)
 	return nil
-}
-
-func (c *Crawler) processNeighborsNodes(neighborshannel <-chan facebookNode) {
-	for neighbor := range neighborshannel {
-		// Transform to our defined Node model and save.
-
-		sourceID, _ := strconv.ParseInt(c.sourceID, 10, 64)
-		destID, _ := strconv.ParseInt(neighbor.ID, 10, 64)
-
-		// Create edge and store.
-		edge := models.Edge{
-			Source:      sourceID,
-			Destination: destID,
-		}
-		edge.Save()
-
-		if c.currentDepth > 1 {
-			err := NewCrawler(neighbor.ID, c.currentDepth-1).Start()
-			if err != nil {
-				fmt.Println(err)
-			}
-		} else {
-			neighbor.ToCrawlerNode(0).Save()
-		}
-	}
 }
