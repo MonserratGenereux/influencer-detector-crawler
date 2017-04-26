@@ -6,7 +6,7 @@ WORKDIR $GOPATH/src/github.com/wizeline/wizeline-bot-analytics-client-api
 COPY . .
 RUN go get ./...
 
-EXPOSE 3000
+EXPOSE 8000
 
 RUN chmod +x start-services.sh
 CMD ["./start-services.sh"]
