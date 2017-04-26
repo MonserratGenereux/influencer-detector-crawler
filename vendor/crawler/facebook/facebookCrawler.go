@@ -1,6 +1,9 @@
 package facebook
 
-import "cassandra"
+import (
+	"cassandra"
+	"log"
+)
 
 const (
 	maxDepth = 2
@@ -40,7 +43,10 @@ func (c *Crawler) Start() error {
 		return nil
 	}
 
-	node.Save()
+	err = node.Save()
+	if err != nil {
+		log.Println(err)
+	}
 
 	if c.currentDepth <= 0 {
 		return nil

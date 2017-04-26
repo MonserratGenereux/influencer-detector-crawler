@@ -3,6 +3,7 @@ package facebook
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"models"
 	"strconv"
 )
@@ -64,7 +65,11 @@ func (c *Crawler) processNeighborsNodes(neighbors []facebookNode) {
 			Source:      sourceID,
 			Destination: destID,
 		}
-		edge.Save()
+
+		err := edge.Save()
+		if err != nil {
+			log.Println(err)
+		}
 
 		crawler := NewCrawler(neighbor.ID, c.currentDepth-1)
 		go crawler.Start()
