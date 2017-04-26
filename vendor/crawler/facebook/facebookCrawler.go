@@ -1,9 +1,6 @@
 package facebook
 
-import (
-	"cassandra"
-	"os"
-)
+import "cassandra"
 
 const (
 	maxDepth = 2
@@ -19,7 +16,7 @@ type Crawler struct {
 // NewCrawler initializes a crawler and set it up.
 func NewCrawler(sourceID string, depth int) *Crawler {
 	return &Crawler{
-		accessToken:  os.Getenv("FACEBOOK_PAGE_ACCESS_TOKEN"),
+		accessToken:  getAccessToken(),
 		sourceID:     sourceID,
 		currentDepth: depth,
 	}
