@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS influencer_detector.nodes (
   id BIGINT PRIMARY KEY,
   platform TEXT,
   name TEXT,
+  depth bigint,
   description TEXT, 
   categories LIST<TEXT>,
   fan_count BIGINT,
